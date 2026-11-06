@@ -144,7 +144,7 @@ function changeImageOrder(images,index,action) {
 $('#replace-project-image').onchange=async event=>{
  const file=event.target.files[0],index=replacingImageIndex;event.target.value='';
  if(!file||index===null||savingProject)return;
- if(file.size>8*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type)){toast('Choose a PNG, JPG or WebP image, up to 8 MB.');return;}
+ if(file.size>50*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type)){toast('Choose a PNG, JPG or WebP image, up to 50 MB.');return;}
  savingProject=true;$('#upload-status').textContent='Preparing replacement image…';
  try{editingImages[index]=await readImage(file);renderEditingImages();$('#upload-status').textContent='Replacement ready. Save changes to publish it.';}catch(error){toast(error.message);}finally{savingProject=false;}
 };
@@ -156,7 +156,14 @@ function readImage(file) {
      const scale=Math.min(1,2000/Math.max(image.width,image.height));
      const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
      const context=canvas.getContext('2d');if(!context)throw new Error('Image processing is unavailable. Try another browser.');
-     context.drawImage(image,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL('image/webp',.9));
+     context.drawImage(image,0,0,canvas.width,canvas.height);
+     let output=canvas.toDataURL('image/webp',.9);
+     for(const quality of [.8,.7,.6]){
+      if(output.length<=4*1024*1024)break;
+      output=canvas.toDataURL('image/webp',quality);
+     }
+     if(output.length>4*1024*1024)throw new Error('This image is still too large after optimization. Export a smaller JPG or WebP and try again.');
+     resolve(output);
     }catch(error){reject(error);}
    };image.src=reader.result;
   };reader.readAsDataURL(file);
@@ -175,7 +182,7 @@ $('#project-form').onsubmit=async event=>{
  if (!title || !description) {$('#upload-status').textContent='Enter a project title and description.';return;}
  if (!editId && !files.length) {$('#upload-status').textContent='Choose at least one project image.';return;}
  if (!editId && projects.length>=100) {$('#upload-status').textContent='This collection supports up to 100 projects. Back up your collection before removing any work.';return;}
- if(files.length>6 || files.some(file=>file.size>8*1024*1024 || !['image/png','image/jpeg','image/webp'].includes(file.type))){$('#upload-status').textContent='Choose up to 6 PNG, JPG or WebP images, 8 MB each.';return;}
+ if(files.length>6 || files.some(file=>file.size>50*1024*1024 || !['image/png','image/jpeg','image/webp'].includes(file.type))){$('#upload-status').textContent='Choose up to 6 PNG, JPG or WebP images, 50 MB each. Larger images are optimized automatically.';return;}
  const existing = editId ? projects.find(project=>project.id===editId) : null;
  if (editId && !existing) {$('#upload-status').textContent='This project was removed. Add it again as a new project.';return;}
  const currentImages = existing ? [...editingImages] : [];
@@ -184,7 +191,8 @@ $('#project-form').onsubmit=async event=>{
  savingProject = true;button.disabled = true;$('#cancel-project-edit').disabled = true;
  $('#upload-status').textContent = files.length ? 'Preparing your artwork…' : 'Saving your changes…';
  try {
-  const addedImages = await Promise.all(files.map(readImage));
+  const addedImages = [];
+  for (const file of files) addedImages.push(await readImage(file));
   const updated = {...existing,id:editId || (crypto.randomUUID?.() || `project-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`),title,category:data.get('category'),description,images:[...currentImages,...addedImages],concept:false};
   const next = editId ? projects.map(project=>project.id===editId ? updated : project) : [updated,...projects];
   await persist(next);
