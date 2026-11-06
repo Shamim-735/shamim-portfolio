@@ -177,7 +177,6 @@ if(finePointer && !reduced) {
   const r=area.getBoundingClientRect();
   targetX=Math.max(-9,Math.min(9,(mouseY-r.top-r.height/2)/r.height*10));
   targetY=Math.max(-10,Math.min(10,(mouseX-r.left-r.width/2)/r.width*-12));
-  ring.classList.toggle('view',!!e.target.closest('.project-cover'));
   ring.classList.toggle('link',!!e.target.closest('a,button,summary') && !e.target.closest('.project-cover'));
  },{passive:true});
  document.addEventListener('mouseleave',()=>{mouseX=-200;mouseY=-200;targetX=0;targetY=0;});
