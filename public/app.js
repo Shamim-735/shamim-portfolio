@@ -81,12 +81,18 @@ function stepProject(direction) {
  openProject(list[(index+direction+list.length)%list.length].id);
  $('#project-dialog').scrollTop=0;
 }
+function projectOrderAction(category) {
+ if(category==='Jersey design')return {url:'https://www.fiverr.com/s/jyebm07',label:'Order jersey design on Fiverr ↗'};
+ if(category==='Logo design')return {url:'https://www.fiverr.com/s/9dG7vAj',label:'Order logo design on Fiverr ↗'};
+ return {url:'https://wa.me/8801868333944?text='+encodeURIComponent('Hi Shamim! I would like to discuss a ' + category.toLowerCase() + ' project.'),label:'Discuss a similar project ↗'};
+}
 function openProject(id) {
  currentProject = projects.findIndex(p => p.id === id);
  const p = projects[currentProject];
  if (!p) return;
- $$('#project-detail [data-title-flow]').forEach(heading => titleObserver?.unobserve(heading));
- $('#project-detail').innerHTML = `<p class="eyebrow">${esc(p.category)} ${p.concept ? ' / CONCEPT PROJECT' : ''}</p><h2 id="project-detail-title">${esc(p.title)}</h2><p class="detail-desc">${esc(p.description)}</p>${p.images.map(src => `<img class="detail-image" src="${esc(src)}" alt="${esc(p.title)} artwork">`).join('')}<div class="detail-bottom"><a class="button" href="https://wa.me/8801868333944?text=${encodeURIComponent('Hi Shamim! I would like to discuss a ' + p.category.toLowerCase() + ' project.')}" target="_blank" rel="noopener">Discuss a similar project ↗</a><button class="subtle-button" id="next-project" ${visibleProjects().length<2?'disabled':''}>Next project →</button></div>`;
+ const order=projectOrderAction(p.category);
+ $('#project-detail [data-title-flow]').forEach(heading => titleObserver?.unobserve(heading));
+ $('#project-detail').innerHTML = `<p class="eyebrow">${esc(p.category)} ${p.concept ? ' / CONCEPT PROJECT' : ''}</p><h2 id="project-detail-title">${esc(p.title)}</h2><p class="detail-desc">${esc(p.description)}</p>${p.images.map(src => `<img class="detail-image" src="${esc(src)}" alt="${esc(p.title)} artwork">`).join('')}<div class="detail-bottom"><a class="button" href="${esc(order.url)}" target="_blank" rel="noopener">${esc(order.label)}</a><button class="subtle-button" id="next-project" ${visibleProjects().length<2?'disabled':''}>Next project →</button></div>`;
  initTitleFlow($('#project-detail'));
  $('#next-project').onclick = () => stepProject(1);
  if (!$('#project-dialog').open) $('#project-dialog').showModal();
