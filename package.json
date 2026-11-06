@@ -1,0 +1,21 @@
+{
+  "name": "shamim-portfolio-netlify",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build-netlify.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "setup:netlify": "node scripts/setup-netlify.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.7",
+    "@netlify/database": "^2.0.2"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17"
+  }
+}

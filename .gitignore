@@ -1,0 +1,10 @@
+node_modules/
+.sites-runtime/
+.wrangler/
+.env
+.env.*
+!.env.example
+
+netlify-public/
+dist/
+.netlify/
