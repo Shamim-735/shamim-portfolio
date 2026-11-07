@@ -34,10 +34,23 @@ const hex=bytes=>[...new Uint8Array(bytes)].map(value=>value.toString(16).padSta
 export async function deliverEnquiry(env,enquiry,origin,fetcher=fetch) {
  let status='failed';
  try {
-  const response=await fetcher('https://formsubmit.co/ajax/iamalauddinshamim1086@gmail.com',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},signal:AbortSignal.timeout(15000),body:JSON.stringify({...enquiry,_subject:`New ${enquiry.project_type.toLowerCase()} enquiry — Shamim portfolio`,_replyto:enquiry.email,_template:'table',_url:origin+'/#contact'})});
-  const result=await response.json();
-  status=/activat/i.test(String(result.message||''))?'pending_activation':response.ok&&(result.success===true||result.success==='true')?'accepted':'failed';
- }catch{}
+  const response=await fetcher('https://formsubmit.co/ajax/iamalauddinshamim1086@gmail.com',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','Accept':'application/json','Origin':origin,'Referer':origin+'/'},
+   signal:AbortSignal.timeout(15000),
+   body:JSON.stringify({...enquiry,_subject:`New ${enquiry.project_type.toLowerCase()} enquiry — Shamim portfolio`,_replyto:enquiry.email,_template:'table',_url:origin+'/#contact'})
+  });
+  const result=await response.json().catch(()=>null);
+  const message=String(result?.message||'');
+  status=/activat/i.test(message)?'pending_activation':response.ok&&(result?.success===true||result?.success==='true')?'accepted':'failed';
+  if(status==='failed'){
+   // Provider responses can contain submitted fields. Log only fixed categories and the HTTP status.
+   const reason=!result?'invalid response':/referr?er|web server|origin/i.test(message)?'site origin rejected':'request rejected';
+   console.warn('Enquiry forwarding failed', {httpStatus:response.status,reason});
+  }
+ }catch(error){
+  console.warn('Enquiry forwarding failed', {reason:error?.name==='TimeoutError'?'request timed out':'connection failed'});
+ }
  await env.DB.prepare('UPDATE enquiries SET email_status=? WHERE id=?').bind(status,enquiry.id).run();
 }
 async function api(request,env,ctx,path) {
